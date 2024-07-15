@@ -53,4 +53,6 @@ class AppService {
   }
 }
 
-export default new AppService();
+const appServiceInstance = new AppService();
+export default appServiceInstance;
+
