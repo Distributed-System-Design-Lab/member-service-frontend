@@ -8,15 +8,27 @@ const HomeComponent = () => {
   useEffect(() => {
     const loggedIn = AppService.checkCredentials();
     setIsLoggedIn(loggedIn);
+
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
+
     if (!loggedIn && code) {
-      AppService.retrieveToken(code);
+      AppService.retrieveToken(code).then(() => {
+        // Clear the authorization code from URL
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState(null, "", newUrl);
+      });
     }
   }, []);
 
   const login = () => {
-    window.location.href = `http://localhost:8083/auth/realms/PeopleSystem/protocol/openid-connect/auth?response_type=code&scope=openid%20write%20read&client_id=${AppService.clientId}&redirect_uri=${AppService.redirectUri}`;
+    const clientId = "peoplesystem";
+    const redirectUri =
+      "http://localhost:8081/resource-server/keycloak/redirect";
+    const authorizationUrl = `http://localhost:8083/auth/realms/PeopleSystem/protocol/openid-connect/auth?response_type=code&scope=openid&client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}`;
+    window.location.href = authorizationUrl;
   };
 
   const logout = () => {

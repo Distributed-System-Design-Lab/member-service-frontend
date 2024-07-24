@@ -3,8 +3,8 @@ import Cookies from "js-cookie";
 
 class AppService {
   constructor() {
-    this.clientId = "hagisun";
-    this.redirectUri = "http://localhost:8089/";
+    this.clientId = "peoplesystem";
+    this.redirectUri = "http://localhost:3000";
   }
 
   retrieveToken(code) {
@@ -29,7 +29,7 @@ class AppService {
       expires: new Date(expireDate),
     });
     console.log("Obtained Access token");
-    window.location.href = "http://localhost:8089";
+    window.location.href = this.redirectUri;
   }
 
   getResource(resourceUrl) {
@@ -55,4 +55,3 @@ class AppService {
 
 const appServiceInstance = new AppService();
 export default appServiceInstance;
-
