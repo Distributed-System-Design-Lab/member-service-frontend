@@ -8,7 +8,7 @@ const Login = () => {
       "http://localhost:8081/resource-server/keycloak/redirect";
     const authorizationUrl = `http://localhost:8083/auth/realms/PeopleSystem/protocol/openid-connect/auth?response_type=code&scope=openid&client_id=${clientId}&redirect_uri=${encodeURIComponent(
       redirectUri
-    )}`;
+    )}&response_type=code&scope=openid`;
     window.location.href = authorizationUrl;
   };
 
