@@ -1,30 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "../Login.css";
+import axios from "axios";
 
 const Auth = () => {
-  const [accessToken, setAccessToken] = useState(
-    sessionStorage.getItem("accessToken") || null
-  );
-  const [refreshToken, setRefreshToken] = useState(
-    sessionStorage.getItem("refreshToken") || null
-  );
   const [userInfo, setUserInfo] = useState(null);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const accessTokenFromUrl = params.get("token");
-    const refreshTokenFromUrl = params.get("refreshToken");
-    const authorizationCode = params.get("code");
-
-    if (authorizationCode && !accessTokenFromUrl) {
-      getUserInfo(authorizationCode);
-    } else if (accessTokenFromUrl && refreshTokenFromUrl) {
-      setAccessToken(accessTokenFromUrl);
-      setRefreshToken(refreshTokenFromUrl);
-      sessionStorage.setItem("accessToken", accessTokenFromUrl);
-      sessionStorage.setItem("refreshToken", refreshTokenFromUrl);
-    }
-  }, []);
 
   const login = () => {
     const clientId = "peoplesystem";
@@ -38,24 +17,15 @@ const Auth = () => {
 
   const logout = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:8081/resource-server/keycloak/logout`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        }
+      const response = await axios.get(
+        `http://localhost:8081/resource-server/keycloak/logout`
       );
 
-      if (response.ok) {
+      if (response.status === 200) {
         console.log("Logged out successfully");
-        setUserInfo(null);
-        sessionStorage.removeItem("accessToken");
-        sessionStorage.removeItem("refreshToken");
+        window.location.href = "/";
       } else {
-        const errorText = await response.text();
-        console.error("Failed to logout:", errorText);
+        console.error("Failed to logout:", response.data);
       }
     } catch (error) {
       console.error("Error during logout", error);
@@ -64,23 +34,23 @@ const Auth = () => {
 
   const getUserInfo = async (authorizationCode) => {
     try {
-      const response = await fetch(
-        `http://localhost:8081/resource-server/keycloak/getUserInfo?authorizationCode=${authorizationCode}`,
+      const response = await axios.get(
+        `http://localhost:8081/resource-server/keycloak/getUserInfo`,
         {
-          method: "GET",
+          params: {
+            authorizationCode: authorizationCode,
+          },
           headers: {
             "Content-Type": "application/json",
           },
         }
       );
 
-      if (response.ok) {
-        const userInfo = await response.json();
-        console.log("User info:", userInfo);
-        setUserInfo(userInfo);
+      if (response.status === 200) {
+        console.log("User info:", response.data);
+        setUserInfo(response.data);
       } else {
-        const errorText = await response.text();
-        console.error("Failed to get user info:", errorText);
+        console.error("Failed to get user info:", response.data);
       }
     } catch (error) {
       console.error("Error retrieving user info", error);
