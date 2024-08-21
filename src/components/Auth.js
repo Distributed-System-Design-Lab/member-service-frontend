@@ -3,7 +3,7 @@ import "../Login.css";
 import axios from "axios";
 
 const Auth = () => {
-  const [userInfo, setUserInfo] = useState(null);
+  const [userInfo] = useState(null);
 
   const login = () => {
     const clientId = "peoplesystem";
@@ -12,13 +12,15 @@ const Auth = () => {
     const authorizationUrl = `http://localhost:8083/auth/realms/PeopleSystem/protocol/openid-connect/auth?response_type=code&scope=openid&client_id=${clientId}&redirect_uri=${encodeURIComponent(
       redirectUri
     )}`;
+
     window.location.href = authorizationUrl;
   };
 
   const logout = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:8081/resource-server/keycloak/logout`
+        `http://localhost:8081/resource-server/keycloak/logout`,
+        { withCredentials: true }
       );
 
       if (response.status === 200) {
@@ -32,30 +34,30 @@ const Auth = () => {
     }
   };
 
-  const getUserInfo = async (authorizationCode) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8081/resource-server/keycloak/getUserInfo`,
-        {
-          params: {
-            authorizationCode: authorizationCode,
-          },
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  // const getUserInfo = async (authorizationCode) => {
+  //   try {
+  //     const response = await axios.get(
+  //       `http://localhost:8081/resource-server/keycloak/getUserInfo`,
+  //       {
+  //         params: {
+  //           authorizationCode: authorizationCode,
+  //         },
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
 
-      if (response.status === 200) {
-        console.log("User info:", response.data);
-        setUserInfo(response.data);
-      } else {
-        console.error("Failed to get user info:", response.data);
-      }
-    } catch (error) {
-      console.error("Error retrieving user info", error);
-    }
-  };
+  //     if (response.status === 200) {
+  //       console.log("User info:", response.data);
+  //       setUserInfo(response.data);
+  //     } else {
+  //       console.error("Failed to get user info:", response.data);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error retrieving user info", error);
+  //   }
+  // };
 
   return (
     <div>
