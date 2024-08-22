@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import "../Login.css";
 import axios from "axios";
+import "../Login.css";
 
 const Auth = () => {
-  const [userInfo] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
   const login = () => {
     const clientId = "peoplesystem";
@@ -13,51 +13,57 @@ const Auth = () => {
       redirectUri
     )}`;
 
+    // Redirect to Keycloak for authentication
     window.location.href = authorizationUrl;
+  };
+
+  const getRefreshToken = () => {
+    return localStorage.getItem("refreshToken");
   };
 
   const logout = async () => {
     try {
+      const refreshToken = getRefreshToken();
+
+      if (!refreshToken) {
+        console.error("Refresh token is missing.");
+        return;
+      }
+
       const response = await axios.get(
-        `http://localhost:8081/resource-server/keycloak/logout`,
-        { withCredentials: true }
+        "http://localhost:8081/resource-server/keycloak/logout",
+        {
+          params: { refreshToken },
+        }
       );
 
-      if (response.status === 200) {
-        console.log("Logged out successfully");
-        window.location.href = "/";
-      } else {
-        console.error("Failed to logout:", response.data);
-      }
+      console.log(response.data);
+
+      // Clear the tokens after logout
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("accessToken");
     } catch (error) {
       console.error("Error during logout", error);
     }
   };
 
-  // const getUserInfo = async (authorizationCode) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `http://localhost:8081/resource-server/keycloak/getUserInfo`,
-  //       {
-  //         params: {
-  //           authorizationCode: authorizationCode,
-  //         },
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
+  const getUserInfo = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8081/resource-server/keycloak/getUserInfo`,
+        { withCredentials: true }
+      );
 
-  //     if (response.status === 200) {
-  //       console.log("User info:", response.data);
-  //       setUserInfo(response.data);
-  //     } else {
-  //       console.error("Failed to get user info:", response.data);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error retrieving user info", error);
-  //   }
-  // };
+      if (response.status === 200) {
+        console.log("User info:", response.data);
+        setUserInfo(response.data);
+      } else {
+        console.error("Failed to get user info:", response.data);
+      }
+    } catch (error) {
+      console.error("Error retrieving user info", error);
+    }
+  };
 
   return (
     <div>
@@ -66,6 +72,9 @@ const Auth = () => {
       </button>
       <button className="btn btn-logout" onClick={logout}>
         Logout
+      </button>
+      <button className="btn btn-info" onClick={getUserInfo}>
+        Get UserInfo
       </button>
 
       {userInfo && (
