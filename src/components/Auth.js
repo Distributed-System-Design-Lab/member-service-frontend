@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../Login.css";
 
 const Auth = () => {
   const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    console.log("Component mounted, attempting to store tokens...");
+    storeRefreshToken();
+    storeAuthCode();
+  }, []);
 
   const login = () => {
     const clientId = "peoplesystem";
@@ -17,8 +23,50 @@ const Auth = () => {
     window.location.href = authorizationUrl;
   };
 
+  const storeRefreshToken = () => {
+    const refreshTokenCookie = document.cookie
+      .split("; ")
+      .find((cookie) => cookie.startsWith("refreshToken="));
+    if (refreshTokenCookie) {
+      const refreshToken = refreshTokenCookie.split("=")[1];
+      console.log("Storing Refresh Token:", refreshToken);
+      document.cookie = `refreshToken=${refreshToken}; SameSite=Lax; Secure; HttpOnly;`;
+    } else {
+      console.log("Refresh Token not found in cookies.");
+    }
+  };
+  const storeAuthCode = () => {
+    const authorizationCodeCookie = document.cookie
+      .split("; ")
+      .find((cookie) => cookie.startsWith("authorizationCode="));
+    if (authorizationCodeCookie) {
+      const authorizationCode = authorizationCodeCookie.split("=")[1];
+      console.log("Storing Authorization Code:", authorizationCode);
+      document.cookie = `authorizationCode=${authorizationCode}; SameSite=Lax; Secure; HttpOnly;`;
+    } else {
+      console.log("Authorization Code not found in cookies.");
+    }
+  };
   const getRefreshToken = () => {
-    return localStorage.getItem("refreshToken");
+    const refreshTokenCookie = document.cookie
+      .split("; ")
+      .find((cookie) => cookie.startsWith("refreshToken="));
+    const refreshToken = refreshTokenCookie
+      ? refreshTokenCookie.split("=")[1]
+      : null;
+    console.log("Retrieved Refresh Token:", refreshToken);
+    return refreshToken;
+  };
+
+  const getAuthorizationCode = () => {
+    const authorizationCodeCookie = document.cookie
+      .split("; ")
+      .find((cookie) => cookie.startsWith("authorizationCode="));
+    const authorizationCode = authorizationCodeCookie
+      ? authorizationCodeCookie.split("=")[1]
+      : null;
+    console.log("Retrieved Authorization Code:", authorizationCode);
+    return authorizationCode;
   };
 
   const logout = async () => {
@@ -37,11 +85,14 @@ const Auth = () => {
         }
       );
 
-      console.log(response.data);
+      console.log("Logout response:", response.data);
 
-      // Clear the tokens after logout
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("accessToken");
+      // Clear all cookies
+      document.cookie.split(";").forEach((cookie) => {
+        const name = cookie.split("=")[0].trim();
+        document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure;`;
+      });
+      window.location.href = "/";
     } catch (error) {
       console.error("Error during logout", error);
     }
@@ -49,8 +100,14 @@ const Auth = () => {
 
   const getUserInfo = async () => {
     try {
+      const authorizationCode = getAuthorizationCode();
+
+      if (!authorizationCode) {
+        console.error("Authorization code is missing.");
+        return;
+      }
       const response = await axios.get(
-        `http://localhost:8081/resource-server/keycloak/getUserInfo`,
+        `http://localhost:8081/resource-server/keycloak/getUserInfo?authorizationCode=${authorizationCode}`,
         { withCredentials: true }
       );
 
