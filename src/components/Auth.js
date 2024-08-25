@@ -69,6 +69,27 @@ const Auth = () => {
     return authorizationCode;
   };
 
+  const introspectToken = async () => {
+    try {
+      const refreshToken = await getRefreshToken();
+      if (!refreshToken) {
+        console.log("Authorization Code is missing.");
+      }
+      const response = await axios.get(
+        `http://localhost:8081/resource-server/keycloak/introspect?token=${refreshToken}`,
+        { withCredentials: true }
+      );
+
+      if (response.status === 200) {
+        console.log("Introspection result:", response.data);
+      } else {
+        console.error("Failed to introspect token:", response.data);
+      }
+    } catch (error) {
+      console.error("Error introspecting token", error);
+    }
+  };
+
   const logout = async () => {
     try {
       const refreshToken = getRefreshToken();
@@ -132,6 +153,9 @@ const Auth = () => {
       </button>
       <button className="btn btn-info" onClick={getUserInfo}>
         Get UserInfo
+      </button>
+      <button className="btn btn-introspect" onClick={introspectToken}>
+        Introspect Token
       </button>
 
       {userInfo && (
